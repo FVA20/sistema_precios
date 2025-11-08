@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+
+{% block title %}Listas de Precios - Sistema de Precios{% endblock %}
+
+{% block page_title %}Listas de Precios{% endblock %}
+
+{% block content %}
+<div class="data-table">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4><i class="bi bi-card-list me-2"></i>Todas las Listas de Precios</h4>
+            <p class="text-muted mb-0">Total de registros: <strong>{{ total }}</strong></p>
+        </div>
+        <a href="/api/listas-precios/" class="btn btn-primary" target="_blank">
+            <i class="bi bi-plus-circle me-2"></i>Agregar Lista (API)
+        </a>
+    </div>
+    
+    {% if listas %}
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Empresa</th>
+                    <th>Sucursal</th>
+                    <th>Nombre</th>
+                    <th>Tipo</th>
+                    <th>Canal</th>
+                    <th>Vigencia</th>
+                    <th>Artículos</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for lista in listas %}
+                <tr>
+                    <td><strong>#{{ lista.id }}</strong></td>
+                    <td>{{ lista.empresa_nombre }}</td>
+                    <td>{{ lista.sucursal_nombre }}</td>
+                    <td><strong>{{ lista.nombre }}</strong></td>
+                    <td>
+                        <span class="badge badge-info">{{ lista.tipo }}</span>
+                    </td>
+                    <td>{{ lista.canal }}</td>
+                    <td>
+                        <small>
+                            <strong>Inicio:</strong> {{ lista.fecha_inicio|date:"d/m/Y" }}<br>
+                            <strong>Fin:</strong> {{ lista.fecha_fin }}
+                        </small>
+                    </td>
+                    <td class="text-center">
+                        <span class="badge badge-info">{{ lista.total_articulos }}</span>
+                    </td>
+                    <td>
+                        {% if lista.activo %}
+                            <span class="badge badge-success">
+                                <i class="bi bi-check-circle me-1"></i>Vigente
+                            </span>
+                        {% else %}
+                            <span class="badge badge-warning">
+                                <i class="bi bi-x-circle me-1"></i>No vigente
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="/api/listas-precios/{{ lista.id }}/" class="btn btn-sm btn-outline-primary" target="_blank" title="Ver detalles">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle me-2"></i>
+        No hay listas de precios registradas. <a href="/api/listas-precios/" target="_blank">Agregar la primera lista</a>
+    </div>
+    {% endif %}
+</div>
+
+<div class="mt-3">
+    <a href="{% url 'dashboard' %}" class="btn btn-outline-primary">
+        <i class="bi bi-arrow-left me-2"></i>Volver al Dashboard
+    </a>
+</div>
+{% endblock %}

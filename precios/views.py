@@ -6,6 +6,8 @@ from django.db import transaction
 from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework.exceptions import ValidationError
 from decimal import Decimal
+from django.shortcuts import render
+from django.db.models import Count
 
 from .models import (
     Empresa, Sucursal, LineaArticulo, GrupoArticulo, Articulo,
@@ -462,3 +464,285 @@ class RegistrarDescuentoProveedorView(APIView):
                 {'error': str(e)},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+
+# ============= VISTAS PARA EL DASHBOARD =============
+# VERSIÓN FINAL CON NOMBRES DE RELACIONES CORRECTOS
+
+def dashboard_view(request):
+    """Vista principal del dashboard"""
+    
+    # Obtener estadísticas generales
+    stats = {
+        'total_empresas': Empresa.objects.count(),
+        'total_articulos': Articulo.objects.count(),
+        'total_listas': ListaPrecio.objects.count(),
+        'total_precios': PrecioArticulo.objects.count(),
+    }
+    
+    # Obtener listas de precios activas con información agregada
+    listas_precios = ListaPrecio.objects.filter(activo=True).annotate(
+        total_articulos=Count('precios')
+    ).select_related('empresa', 'sucursal')[:5]
+    
+    # Formatear datos de listas de precios
+    listas_data = []
+    for lista in listas_precios:
+        # Obtener nombre de empresa de forma segura
+        empresa_nombre = 'N/A'
+        if lista.empresa:
+            if hasattr(lista.empresa, 'razon_social'):
+                empresa_nombre = lista.empresa.razon_social
+            elif hasattr(lista.empresa, 'nombre'):
+                empresa_nombre = lista.empresa.nombre
+            else:
+                empresa_nombre = str(lista.empresa)
+        
+        listas_data.append({
+            'id': lista.id,
+            'empresa_nombre': empresa_nombre,
+            'nombre': lista.nombre,
+            'tipo': lista.tipo,
+            'canal': lista.canal if hasattr(lista, 'canal') and lista.canal else 'General',
+            'total_articulos': lista.total_articulos,
+            'activo': lista.activo,
+        })
+    
+    # Artículos recientes
+    articulos_recientes = Articulo.objects.select_related('grupo__linea').order_by('-id')[:5]
+    articulos_data = []
+    for articulo in articulos_recientes:
+        articulos_data.append({
+            'codigo': articulo.codigo,
+            'descripcion': articulo.nombre,
+            'linea_nombre': articulo.grupo.linea.nombre if articulo.grupo and articulo.grupo.linea else 'Sin línea',
+            'activo': articulo.activo,
+        })
+    
+    # Empresas con conteo de sucursales
+    empresas = Empresa.objects.annotate(
+        total_sucursales=Count('sucursales')  # CORREGIDO: 'sucursales' en plural
+    )[:5]
+    
+    empresas_data = []
+    for empresa in empresas:
+        # Obtener RUC y nombre de forma segura
+        ruc = empresa.ruc if hasattr(empresa, 'ruc') else 'N/A'
+        
+        if hasattr(empresa, 'razon_social'):
+            nombre = empresa.razon_social
+        elif hasattr(empresa, 'nombre'):
+            nombre = empresa.nombre
+        else:
+            nombre = str(empresa)
+        
+        empresas_data.append({
+            'ruc': ruc,
+            'razon_social': nombre,
+            'total_sucursales': empresa.total_sucursales,
+        })
+    
+    context = {
+        'stats': stats,
+        'listas_precios': listas_data,
+        'articulos_recientes': articulos_data,
+        'empresas': empresas_data,
+    }
+    
+    return render(request, 'dashboard.html', context)
+
+
+def empresas_list_view(request):
+    """Vista de listado de empresas"""
+    empresas = Empresa.objects.annotate(
+        total_sucursales=Count('sucursales'),  # CORREGIDO: 'sucursales' en plural
+        total_listas=Count('listas_precios')  # CORREGIDO: 'listas_precios' en lugar de 'listaprecio'
+    ).order_by('-id')
+    
+    empresas_data = []
+    for empresa in empresas:
+        # Obtener campos de forma segura
+        ruc = empresa.ruc if hasattr(empresa, 'ruc') else 'N/A'
+        
+        if hasattr(empresa, 'razon_social'):
+            razon_social = empresa.razon_social
+        elif hasattr(empresa, 'nombre'):
+            razon_social = empresa.nombre
+        else:
+            razon_social = str(empresa)
+        
+        if hasattr(empresa, 'nombre_comercial'):
+            nombre_comercial = empresa.nombre_comercial
+        else:
+            nombre_comercial = razon_social
+        
+        empresas_data.append({
+            'id': empresa.id,
+            'ruc': ruc,
+            'razon_social': razon_social,
+            'nombre_comercial': nombre_comercial,
+            'total_sucursales': empresa.total_sucursales,
+            'total_listas': empresa.total_listas,
+            'activo': empresa.activo,
+        })
+    
+    context = {
+        'empresas': empresas_data,
+        'total': empresas.count(),
+    }
+    
+    return render(request, 'empresas_list.html', context)
+
+
+def sucursales_list_view(request):
+    """Vista de listado de sucursales"""
+    sucursales = Sucursal.objects.select_related('empresa').order_by('-id')
+    
+    sucursales_data = []
+    for sucursal in sucursales:
+        # Obtener nombre de empresa de forma segura
+        if sucursal.empresa:
+            if hasattr(sucursal.empresa, 'razon_social'):
+                empresa_nombre = sucursal.empresa.razon_social
+            elif hasattr(sucursal.empresa, 'nombre'):
+                empresa_nombre = sucursal.empresa.nombre
+            else:
+                empresa_nombre = str(sucursal.empresa)
+        else:
+            empresa_nombre = 'N/A'
+        
+        sucursales_data.append({
+            'id': sucursal.id,
+            'codigo': sucursal.codigo,
+            'nombre': sucursal.nombre,
+            'empresa_nombre': empresa_nombre,
+            'direccion': sucursal.direccion if hasattr(sucursal, 'direccion') else 'N/A',
+            'telefono': sucursal.telefono if hasattr(sucursal, 'telefono') else 'N/A',
+            'activo': sucursal.activo,
+        })
+    
+    context = {
+        'sucursales': sucursales_data,
+        'total': sucursales.count(),
+    }
+    
+    return render(request, 'sucursales_list.html', context)
+
+
+def articulos_list_view(request):
+    """Vista de listado de artículos"""
+    articulos = Articulo.objects.select_related('grupo__linea').order_by('-id')
+    
+    articulos_data = []
+    for articulo in articulos:
+        articulos_data.append({
+            'id': articulo.id,
+            'codigo': articulo.codigo,
+            'descripcion': articulo.nombre,
+            'linea_nombre': articulo.grupo.linea.nombre if articulo.grupo and articulo.grupo.linea else 'N/A',
+            'grupo_nombre': articulo.grupo.nombre if articulo.grupo else 'N/A',
+            'unidad_medida': articulo.unidad_medida if hasattr(articulo, 'unidad_medida') else 'UND',
+            'activo': articulo.activo,
+        })
+    
+    context = {
+        'articulos': articulos_data,
+        'total': articulos.count(),
+    }
+    
+    return render(request, 'articulos_list.html', context)
+
+
+def listas_precios_list_view(request):
+    """Vista de listado de listas de precios"""
+    listas = ListaPrecio.objects.select_related('empresa', 'sucursal').annotate(
+        total_articulos=Count('precios')
+    ).order_by('-id')
+    
+    listas_data = []
+    for lista in listas:
+        # Obtener nombre de empresa de forma segura
+        if lista.empresa:
+            if hasattr(lista.empresa, 'razon_social'):
+                empresa_nombre = lista.empresa.razon_social
+            elif hasattr(lista.empresa, 'nombre'):
+                empresa_nombre = lista.empresa.nombre
+            else:
+                empresa_nombre = str(lista.empresa)
+        else:
+            empresa_nombre = 'N/A'
+        
+        listas_data.append({
+            'id': lista.id,
+            'empresa_nombre': empresa_nombre,
+            'sucursal_nombre': lista.sucursal.nombre if lista.sucursal else 'Todas',
+            'nombre': lista.nombre,
+            'tipo': lista.tipo,
+            'canal': lista.canal if hasattr(lista, 'canal') and lista.canal else 'General',
+            'fecha_inicio': lista.fecha_inicio,
+            'fecha_fin': lista.fecha_fin if hasattr(lista, 'fecha_fin') and lista.fecha_fin else 'Indefinido',
+            'total_articulos': lista.total_articulos,
+            'activo': lista.activo,
+        })
+    
+    context = {
+        'listas': listas_data,
+        'total': listas.count(),
+    }
+    
+    return render(request, 'listas_precios_list.html', context)
+
+
+def precios_articulos_list_view(request):
+    """Vista de listado de precios por artículo"""
+    precios = PrecioArticulo.objects.select_related(
+        'lista_precio', 'articulo'
+    ).order_by('-id')[:100]  # Limitar a 100 registros
+    
+    precios_data = []
+    for precio in precios:
+        precios_data.append({
+            'id': precio.id,
+            'lista_nombre': precio.lista_precio.nombre,
+            'articulo_codigo': precio.articulo.codigo,
+            'articulo_desc': precio.articulo.nombre,
+            'precio_base': float(precio.precio_base),
+            'precio_final': float(precio.precio_final),
+            'descuento': float(precio.descuento_porcentaje) if hasattr(precio, 'descuento_porcentaje') and precio.descuento_porcentaje else 0,
+            'activo': precio.activo if hasattr(precio, 'activo') else True,
+        })
+    
+    context = {
+        'precios': precios_data,
+        'total': PrecioArticulo.objects.count(),
+    }
+    
+    return render(request, 'precios_articulos_list.html', context)
+
+
+def reglas_precios_list_view(request):
+    """Vista de listado de reglas de precios"""
+    reglas = ReglaPrecio.objects.select_related(
+        'lista_precio', 'linea_articulo', 'grupo_articulo'
+    ).order_by('-id')
+    
+    reglas_data = []
+    for regla in reglas:
+        reglas_data.append({
+            'id': regla.id,
+            'lista_nombre': regla.lista_precio.nombre,
+            'tipo_regla': regla.tipo_regla,
+            'linea_nombre': regla.linea_articulo.nombre if regla.linea_articulo else 'N/A',
+            'grupo_nombre': regla.grupo_articulo.nombre if regla.grupo_articulo else 'N/A',
+            'tipo_ajuste': regla.tipo_descuento,
+            'valor_ajuste': float(regla.valor_descuento),
+            'prioridad': regla.prioridad,
+            'activo': regla.activo,
+        })
+    
+    context = {
+        'reglas': reglas_data,
+        'total': reglas.count(),
+    }
+    
+    return render(request, 'reglas_precios_list.html', context)

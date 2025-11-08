@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block title %}Reglas de Precios - Sistema de Precios{% endblock %}
+
+{% block page_title %}Reglas de Precios{% endblock %}
+
+{% block content %}
+<div class="data-table">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4><i class="bi bi-diagram-3 me-2"></i>Reglas de Precios</h4>
+            <p class="text-muted mb-0">Total de registros: <strong>{{ total }}</strong></p>
+        </div>
+        <a href="/api/reglas-precios/" class="btn btn-primary" target="_blank">
+            <i class="bi bi-plus-circle me-2"></i>Agregar Regla (API)
+        </a>
+    </div>
+    
+    {% if reglas %}
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Lista de Precio</th>
+                    <th>Tipo Regla</th>
+                    <th>Línea</th>
+                    <th>Grupo</th>
+                    <th>Tipo Ajuste</th>
+                    <th>Valor</th>
+                    <th>Prioridad</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for regla in reglas %}
+                <tr>
+                    <td><strong>#{{ regla.id }}</strong></td>
+                    <td>{{ regla.lista_nombre|truncatewords:4 }}</td>
+                    <td>
+                        <span class="badge badge-info">{{ regla.tipo_regla }}</span>
+                    </td>
+                    <td>{{ regla.linea_nombre }}</td>
+                    <td>{{ regla.grupo_nombre }}</td>
+                    <td>
+                        {% if regla.tipo_ajuste == 'PORCENTAJE' %}
+                            <span class="badge badge-success">%</span>
+                        {% else %}
+                            <span class="badge badge-info">S/</span>
+                        {% endif %}
+                    </td>
+                    <td class="text-end">
+                        <strong>
+                            {% if regla.tipo_ajuste == 'PORCENTAJE' %}
+                                {{ regla.valor_ajuste }}%
+                            {% else %}
+                                S/ {{ regla.valor_ajuste|floatformat:2 }}
+                            {% endif %}
+                        </strong>
+                    </td>
+                    <td class="text-center">
+                        <span class="badge badge-warning">{{ regla.prioridad }}</span>
+                    </td>
+                    <td>
+                        {% if regla.activo %}
+                            <span class="badge badge-success">
+                                <i class="bi bi-check-circle me-1"></i>Activa
+                            </span>
+                        {% else %}
+                            <span class="badge badge-warning">
+                                <i class="bi bi-x-circle me-1"></i>Inactiva
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="/api/reglas-precios/{{ regla.id }}/" class="btn btn-sm btn-outline-primary" target="_blank" title="Ver detalles">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle me-2"></i>
+        No hay reglas de precios registradas. <a href="/api/reglas-precios/" target="_blank">Agregar la primera regla</a>
+    </div>
+    {% endif %}
+</div>
+
+<div class="mt-3">
+    <a href="{% url 'dashboard' %}" class="btn btn-outline-primary">
+        <i class="bi bi-arrow-left me-2"></i>Volver al Dashboard
+    </a>
+</div>
+{% endblock %}

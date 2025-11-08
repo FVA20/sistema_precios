@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Sistema de Gestión de Precios{% endblock %}</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-blue: #1e40af;
+            --secondary-blue: #3b82f6;
+            --light-blue: #dbeafe;
+            --dark-blue: #1e3a8a;
+            --sidebar-width: 260px;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            overflow-x: hidden;
+        }
+        
+        /* Sidebar */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: var(--sidebar-width);
+            background: linear-gradient(180deg, var(--primary-blue) 0%, var(--dark-blue) 100%);
+            padding: 0;
+            box-shadow: 4px 0 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        
+        .sidebar-header {
+            padding: 25px 20px;
+            background: rgba(255,255,255,0.1);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .sidebar-header h4 {
+            color: white;
+            font-weight: 700;
+            font-size: 1.3rem;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .sidebar-header p {
+            color: rgba(255,255,255,0.8);
+            font-size: 0.85rem;
+            margin: 5px 0 0 0;
+        }
+        
+        .nav-menu {
+            padding: 20px 0;
+            list-style: none;
+        }
+        
+        .nav-item {
+            margin: 5px 15px;
+        }
+        
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            color: rgba(255,255,255,0.85);
+            text-decoration: none;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            gap: 12px;
+        }
+        
+        .nav-link:hover {
+            background: rgba(255,255,255,0.15);
+            color: white;
+            transform: translateX(5px);
+        }
+        
+        .nav-link.active {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            font-weight: 600;
+        }
+        
+        .nav-link i {
+            font-size: 1.2rem;
+            width: 24px;
+            text-align: center;
+        }
+        
+        /* Main Content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            min-height: 100vh;
+            background-color: #f8fafc;
+        }
+        
+        /* Topbar */
+        .topbar {
+            background: white;
+            padding: 20px 30px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .topbar h2 {
+            color: var(--primary-blue);
+            font-weight: 700;
+            font-size: 1.8rem;
+            margin: 0;
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            color: #64748b;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--light-blue);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-blue);
+            font-weight: 600;
+        }
+        
+        /* Content Area */
+        .content-area {
+            padding: 30px;
+        }
+        
+        /* Cards */
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            transition: all 0.3s ease;
+            border: 1px solid #e2e8f0;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 16px rgba(30,64,175,0.15);
+        }
+        
+        .stat-card .icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+        }
+        
+        .stat-card.blue .icon {
+            background: var(--light-blue);
+            color: var(--primary-blue);
+        }
+        
+        .stat-card.green .icon {
+            background: #d1fae5;
+            color: #059669;
+        }
+        
+        .stat-card.purple .icon {
+            background: #e9d5ff;
+            color: #7c3aed;
+        }
+        
+        .stat-card.orange .icon {
+            background: #fed7aa;
+            color: #ea580c;
+        }
+        
+        .stat-card h3 {
+            color: #64748b;
+            font-size: 0.9rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+        
+        .stat-card .value {
+            color: #1e293b;
+            font-size: 2rem;
+            font-weight: 700;
+        }
+        
+        /* Tables */
+        .data-table {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin-top: 30px;
+        }
+        
+        .data-table h4 {
+            color: var(--primary-blue);
+            font-weight: 700;
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+        }
+        
+        .table {
+            margin: 0;
+        }
+        
+        .table thead th {
+            background: var(--light-blue);
+            color: var(--primary-blue);
+            font-weight: 600;
+            border: none;
+            padding: 15px;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.5px;
+        }
+        
+        .table tbody tr {
+            border-bottom: 1px solid #e2e8f0;
+            transition: all 0.2s ease;
+        }
+        
+        .table tbody tr:hover {
+            background: #f8fafc;
+        }
+        
+        .table tbody td {
+            padding: 15px;
+            color: #475569;
+            vertical-align: middle;
+        }
+        
+        /* Buttons */
+        .btn-primary {
+            background: var(--primary-blue);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            background: var(--dark-blue);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(30,64,175,0.3);
+        }
+        
+        .btn-outline-primary {
+            border: 2px solid var(--primary-blue);
+            color: var(--primary-blue);
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-outline-primary:hover {
+            background: var(--primary-blue);
+            color: white;
+        }
+        
+        /* Badges */
+        .badge {
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.75rem;
+        }
+        
+        .badge-success {
+            background: #d1fae5;
+            color: #059669;
+        }
+        
+        .badge-warning {
+            background: #fef3c7;
+            color: #d97706;
+        }
+        
+        .badge-info {
+            background: var(--light-blue);
+            color: var(--primary-blue);
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .topbar h2 {
+                font-size: 1.3rem;
+            }
+            
+            .stat-card .value {
+                font-size: 1.5rem;
+            }
+        }
+        
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--secondary-blue);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-blue);
+        }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h4><i class="bi bi-graph-up-arrow"></i> Sistema Precios</h4>
+            <p>Gestión Integral</p>
+        </div>
+        
+        <ul class="nav-menu">
+            <li class="nav-item">
+                <a href="{% url 'dashboard' %}" class="nav-link {% if request.path == '/dashboard/' %}active{% endif %}">
+                    <i class="bi bi-speedometer2"></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'empresas-list' %}" class="nav-link {% if 'empresas' in request.path %}active{% endif %}">
+                    <i class="bi bi-building"></i>
+                    <span>Empresas</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'sucursales-list' %}" class="nav-link {% if 'sucursales' in request.path %}active{% endif %}">
+                    <i class="bi bi-shop"></i>
+                    <span>Sucursales</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'articulos-list' %}" class="nav-link {% if 'articulos' in request.path %}active{% endif %}">
+                    <i class="bi bi-box-seam"></i>
+                    <span>Artículos</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'listas-precios-list' %}" class="nav-link {% if 'listas-precios' in request.path %}active{% endif %}">
+                    <i class="bi bi-card-list"></i>
+                    <span>Listas de Precios</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'precios-articulos-list' %}" class="nav-link {% if 'precios-articulos' in request.path %}active{% endif %}">
+                    <i class="bi bi-currency-dollar"></i>
+                    <span>Precios por Artículo</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="{% url 'reglas-precios-list' %}" class="nav-link {% if 'reglas-precios' in request.path %}active{% endif %}">
+                    <i class="bi bi-diagram-3"></i>
+                    <span>Reglas de Precios</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/api/" class="nav-link" target="_blank">
+                    <i class="bi bi-code-square"></i>
+                    <span>API REST</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a href="/admin/" class="nav-link" target="_blank">
+                    <i class="bi bi-gear"></i>
+                    <span>Administración</span>
+                </a>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Topbar -->
+        <div class="topbar">
+            <h2>{% block page_title %}Dashboard{% endblock %}</h2>
+            <div class="user-info">
+                <span>Fabricio Villanueva</span>
+                <div class="user-avatar">FV</div>
+            </div>
+        </div>
+
+        <!-- Content Area -->
+        <div class="content-area">
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

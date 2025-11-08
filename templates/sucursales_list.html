@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block title %}Sucursales - Sistema de Precios{% endblock %}
+
+{% block page_title %}Gestión de Sucursales{% endblock %}
+
+{% block content %}
+<div class="data-table">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4><i class="bi bi-shop me-2"></i>Todas las Sucursales</h4>
+            <p class="text-muted mb-0">Total de registros: <strong>{{ total }}</strong></p>
+        </div>
+        <a href="/api/sucursales/" class="btn btn-primary" target="_blank">
+            <i class="bi bi-plus-circle me-2"></i>Agregar Sucursal (API)
+        </a>
+    </div>
+    
+    {% if sucursales %}
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Código</th>
+                    <th>Nombre</th>
+                    <th>Empresa</th>
+                    <th>Dirección</th>
+                    <th>Teléfono</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sucursal in sucursales %}
+                <tr>
+                    <td><strong>#{{ sucursal.id }}</strong></td>
+                    <td><strong>{{ sucursal.codigo }}</strong></td>
+                    <td>{{ sucursal.nombre }}</td>
+                    <td>{{ sucursal.empresa_nombre }}</td>
+                    <td>{{ sucursal.direccion|truncatewords:8 }}</td>
+                    <td>{{ sucursal.telefono }}</td>
+                    <td>
+                        {% if sucursal.activo %}
+                            <span class="badge badge-success">
+                                <i class="bi bi-check-circle me-1"></i>Activa
+                            </span>
+                        {% else %}
+                            <span class="badge badge-warning">
+                                <i class="bi bi-x-circle me-1"></i>Inactiva
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="/api/sucursales/{{ sucursal.id }}/" class="btn btn-sm btn-outline-primary" target="_blank" title="Ver detalles">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle me-2"></i>
+        No hay sucursales registradas. <a href="/api/sucursales/" target="_blank">Agregar la primera sucursal</a>
+    </div>
+    {% endif %}
+</div>
+
+<div class="mt-3">
+    <a href="{% url 'dashboard' %}" class="btn btn-outline-primary">
+        <i class="bi bi-arrow-left me-2"></i>Volver al Dashboard
+    </a>
+</div>
+{% endblock %}

@@ -1,0 +1,230 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Sistema de Precios{% endblock %}
+
+{% block page_title %}Dashboard General{% endblock %}
+
+{% block content %}
+<!-- Estadísticas Principales -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card blue">
+            <div class="icon">
+                <i class="bi bi-building"></i>
+            </div>
+            <h3>Empresas</h3>
+            <div class="value">{{ stats.total_empresas }}</div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="stat-card green">
+            <div class="icon">
+                <i class="bi bi-box-seam"></i>
+            </div>
+            <h3>Artículos</h3>
+            <div class="value">{{ stats.total_articulos }}</div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="stat-card purple">
+            <div class="icon">
+                <i class="bi bi-card-list"></i>
+            </div>
+            <h3>Listas de Precios</h3>
+            <div class="value">{{ stats.total_listas }}</div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="stat-card orange">
+            <div class="icon">
+                <i class="bi bi-currency-dollar"></i>
+            </div>
+            <h3>Precios Registrados</h3>
+            <div class="value">{{ stats.total_precios }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- Listas de Precios Activas -->
+<div class="data-table">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4><i class="bi bi-card-list me-2"></i>Listas de Precios Activas</h4>
+        <a href="{% url 'listas-precios-list' %}" class="btn btn-primary">
+            <i class="bi bi-plus-circle me-2"></i>Ver Todas
+        </a>
+    </div>
+    
+    {% if listas_precios %}
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Empresa</th>
+                    <th>Nombre</th>
+                    <th>Tipo</th>
+                    <th>Canal</th>
+                    <th>Artículos</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for lista in listas_precios %}
+                <tr>
+                    <td><strong>#{{ lista.id }}</strong></td>
+                    <td>{{ lista.empresa_nombre }}</td>
+                    <td><strong>{{ lista.nombre }}</strong></td>
+                    <td>
+                        <span class="badge badge-info">{{ lista.tipo }}</span>
+                    </td>
+                    <td>{{ lista.canal }}</td>
+                    <td class="text-center">{{ lista.total_articulos }}</td>
+                    <td>
+                        {% if lista.activo %}
+                            <span class="badge badge-success">
+                                <i class="bi bi-check-circle me-1"></i>Activa
+                            </span>
+                        {% else %}
+                            <span class="badge badge-warning">
+                                <i class="bi bi-x-circle me-1"></i>Inactiva
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="/api/listas-precios/{{ lista.id }}/" class="btn btn-sm btn-outline-primary" target="_blank">
+                            <i class="bi bi-eye"></i>
+                        </a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="alert alert-info">
+        <i class="bi bi-info-circle me-2"></i>
+        No hay listas de precios registradas aún.
+    </div>
+    {% endif %}
+</div>
+
+<!-- Artículos Recientes -->
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="data-table">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4><i class="bi bi-box-seam me-2"></i>Artículos Recientes</h4>
+                <a href="{% url 'articulos-list' %}" class="btn btn-sm btn-outline-primary">Ver Todos</a>
+            </div>
+            
+            {% if articulos_recientes %}
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Código</th>
+                            <th>Descripción</th>
+                            <th>Línea</th>
+                            <th>Estado</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for articulo in articulos_recientes %}
+                        <tr>
+                            <td><strong>{{ articulo.codigo }}</strong></td>
+                            <td>{{ articulo.descripcion|truncatewords:5 }}</td>
+                            <td>{{ articulo.linea_nombre }}</td>
+                            <td>
+                                {% if articulo.activo %}
+                                    <span class="badge badge-success">Activo</span>
+                                {% else %}
+                                    <span class="badge badge-warning">Inactivo</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted">No hay artículos registrados.</p>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="data-table">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h4><i class="bi bi-building me-2"></i>Empresas Registradas</h4>
+                <a href="{% url 'empresas-list' %}" class="btn btn-sm btn-outline-primary">Ver Todas</a>
+            </div>
+            
+            {% if empresas %}
+            <div class="table-responsive">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>RUC</th>
+                            <th>Razón Social</th>
+                            <th>Sucursales</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for empresa in empresas %}
+                        <tr>
+                            <td><strong>{{ empresa.ruc }}</strong></td>
+                            <td>{{ empresa.razon_social|truncatewords:4 }}</td>
+                            <td class="text-center">
+                                <span class="badge badge-info">{{ empresa.total_sucursales }}</span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="text-muted">No hay empresas registradas.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Accesos Rápidos -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="data-table">
+            <h4><i class="bi bi-lightning-charge me-2"></i>Accesos Rápidos</h4>
+            <div class="row g-3 mt-2">
+                <div class="col-md-3">
+                    <a href="/api/precios/calcular/" class="btn btn-outline-primary w-100 py-3" target="_blank">
+                        <i class="bi bi-calculator d-block fs-3 mb-2"></i>
+                        Calcular Precio
+                    </a>
+                </div>
+                <div class="col-md-3">
+                    <a href="{% url 'listas-precios-list' %}" class="btn btn-outline-primary w-100 py-3">
+                        <i class="bi bi-plus-circle d-block fs-3 mb-2"></i>
+                        Nueva Lista
+                    </a>
+                </div>
+                <div class="col-md-3">
+                    <a href="{% url 'articulos-list' %}" class="btn btn-outline-primary w-100 py-3">
+                        <i class="bi bi-box-seam d-block fs-3 mb-2"></i>
+                        Gestionar Artículos
+                    </a>
+                </div>
+                <div class="col-md-3">
+                    <a href="/api/" class="btn btn-outline-primary w-100 py-3" target="_blank">
+                        <i class="bi bi-code-square d-block fs-3 mb-2"></i>
+                        Ver API
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
